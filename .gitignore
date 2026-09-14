@@ -1,9 +1,10 @@
-sample/**/output/*
-!sample/**/output/.gitkeep
-sample/**/output.json
+samples/**/output/*
+!samples/**/output/.gitkeep
+samples/**/output.json
 *.tar.gz
 *.Rcheck
 package/man/
+/dist/
 **/.eqty_sdk/
 **/.eqty/
 
@@ -48,6 +49,9 @@ rsconnect/
 .Renviron
 .httr-oauth
 eqty-pypi-pass.txt
+
+# Local Python SDK API reference used while maintaining the R wrapper
+/description.txt
 
 # Python virtualenvs someone might create locally while following the README
 .venv/
