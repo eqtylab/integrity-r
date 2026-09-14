@@ -95,8 +95,9 @@ Review the important usage notes below before storing asset content.
 ## Core concepts
 
 This section provides a concise introduction to the main objects and workflows.
-Refer to the generated R help and the Python SDK documentation for complete API
-signatures, options, and behavior.
+Use the generated R help for the supported R API, signatures, options, and
+behavior. The Python SDK documentation describes the underlying implementation;
+it is not the source for R syntax and does not replace the R interface.
 
 ### Overview
 
@@ -200,8 +201,8 @@ help(package = "eqty.sdk.r")
 
 - [CRAN package page](https://cran.r-project.org/package=eqty.sdk.r) — available
   after the first CRAN release
-- [Latest Python SDK documentation](https://eqtylab.github.io/integrity-py/latest/)
-- [Development Python SDK documentation](https://eqtylab.github.io/integrity-py/dev/)
+- [Latest Python SDK implementation documentation](https://eqtylab.github.io/integrity-py/latest/)
+- [Development Python SDK implementation documentation](https://eqtylab.github.io/integrity-py/dev/)
 - [R examples](https://github.com/eqtylab/integrity-r/tree/main/samples)
 
 ## Development and releases
