@@ -1,0 +1,59 @@
+sample/**/output/*
+!sample/**/output/.gitkeep
+sample/**/output.json
+*.tar.gz
+*.Rcheck
+package/man/
+**/.eqty_sdk/
+**/.eqty/
+
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# R session/project artifacts
+.Rhistory
+.Rapp.history
+.RData
+.RDataTmp
+.Ruserdata
+.Rproj.user/
+
+# Example code generated during package builds
+*-Ex.R
+
+# Generated vignettes and documentation
+vignettes/*.html
+vignettes/*.pdf
+docs/
+
+# R Markdown and knitr caches/temporary files
+*_cache/
+/cache/
+*.utf8.md
+*.knit.md
+
+# Translation temporary files
+po/*~
+
+# RStudio Connect deployment metadata
+rsconnect/
+
+# secrets some workflows are told to put here (EQTY_API_KEY etc.)
+.Renviron
+.httr-oauth
+eqty-pypi-pass.txt
+
+# Python virtualenvs someone might create locally while following the README
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# OS cruft
+.DS_Store
