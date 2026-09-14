@@ -1,0 +1,38 @@
+Table 14-2.01 — Summary of Demographic and Baseline Characteristics
+POC_LZZT_001 (single-arm observational cohort)
+
+Source: ADSL (subject-level analysis dataset), filtered to ITTFL == "Y".
+
+Output structure: a long-format summary table with exactly three columns:
+  Characteristic — the variable label (blank for continuation rows)
+  Statistic      — which statistic this row reports
+  Value          — the computed value, formatted as text
+
+For each CONTINUOUS variable below, produce exactly 3 rows, in this order:
+  1. Statistic = "Mean (SD)",  Value formatted as "X.X (X.XX)"
+  2. Statistic = "Median",     Value formatted as "X.X"
+  3. Statistic = "Min – Max",  Value formatted as "X.X – X.X"
+(missing values excluded from all three calculations; if no non-missing
+values exist, Value = "—" for all three rows)
+
+Continuous variables, in this order:
+  AGE       -> label "Age (years)"
+  HEIGHTBL  -> label "Baseline Height (cm)"
+  WEIGHTBL  -> label "Baseline Weight (kg)"
+  BMIBL     -> label "Baseline BMI (kg/m²)"
+  MMSETOT   -> label "MMSE Total"
+
+For each CATEGORICAL variable below, produce a header row (Characteristic
+= the label, Statistic and Value both blank), followed by one row per
+distinct observed level (missing values excluded), each with
+Characteristic = two leading spaces + the level name, Statistic = "n",
+Value = the count of subjects with that level, as plain text.
+
+Categorical variables, in this order:
+  AGEGR1 -> label "Age Group"
+  RACE   -> label "Race"
+  SEX    -> label "Sex"
+
+Row order overall: Age (years) [3 rows], Age Group [header + levels],
+Race [header + levels], Sex [header + levels], Baseline Height [3 rows],
+Baseline Weight [3 rows], Baseline BMI [3 rows], MMSE Total [3 rows].

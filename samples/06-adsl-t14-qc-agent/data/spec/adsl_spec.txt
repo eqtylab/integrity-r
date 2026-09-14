@@ -1,0 +1,58 @@
+ADSL — Subject-Level Analysis Dataset Specification
+POC_LZZT_001 (single-arm RWE observational cohort — no randomised treatment)
+
+Source domains: RWD_DM, RWD_VS, RWD_QS, RWD_MH, RWD_SC, RWD_LB (all SDTM,
+one row per subject unless noted). One row per subject in the output.
+
+For source-based derivations, leave the derived value missing when no
+qualifying non-missing source value exists. Empty filtered inputs must not
+stop the program.
+
+Required derivations:
+
+1. Treatment variables (observational study — no randomisation exists):
+   TRT01P/TRT01A = "Observational Cohort" (constant); TRT01PN/TRT01AN = 0.
+   TRTSDT = RFSTDTC (index date proxy). TRTEDT = RFENDTC.
+   TRTDURD = (TRTEDT - TRTSDT) + 1, in days.
+
+2. Population flags:
+   ITTFL = "Y" for all subjects (single observational cohort, no exclusion
+   at this stage). SAFFL = "Y" for all subjects with any observation data.
+   EFFFL = "Y" only for subjects with a non-missing MMSE total score,
+   otherwise "N".
+
+3. Age group (AGEGR1/AGEGR1N), based on AGE from RWD_DM:
+   <65 -> "1"/"<65" ; 65-80 inclusive -> "2"/"65-80" ; >80 -> "3"/">80"
+
+4. MMSE total (MMSETOT): sum of MMSE sub-item scores (QSTESTCD = "MMS112")
+   recorded at the baseline visit only, from RWD_QS.
+
+5. Baseline anthropometrics from RWD_VS:
+   HEIGHTBL: height recorded at the first study visit.
+   WEIGHTBL: weight recorded at the third study visit (a later visit than
+   height, per this protocol's visit schedule for repeat weight measures).
+   BMIBL = WEIGHTBL(kg) / (HEIGHTBL(cm)/100)^2, rounded to 1 decimal.
+   BMIBLGR1: "<25" / "25-<30" / ">=30".
+
+6. Disease duration (DURDIS), in months:
+   (date of first study visit - date of primary Alzheimer's/dementia
+   diagnosis onset, from RWD_MH) / (365.25/12), rounded to 1 decimal.
+   DURDSGR1: "<12" / ">=12".
+
+7. Completion flags, based on presence of any lab record (RWD_LB) at a
+   given visit number:
+   COMP8FL = "Y" if the subject has a lab record at visit 8, else "N".
+   COMP16FL = "Y" if the subject has a lab record at visit 10, else "N".
+   COMP24FL = "Y" if the subject has a lab record at visit 12, else "N".
+
+8. End-of-study status:
+   EOSSTT = "DISCONTINUED" if DTHFL = "Y", else "COMPLETED".
+   DCDECOD = "DEATH" if DTHFL = "Y", else "COMPLETED".
+
+9. Education level (EDUCLVL): from RWD_SC, test code "EDULEVEL".
+
+10. Race, numeric (RACEN), per standard CDISC controlled terminology:
+    WHITE=1, BLACK OR AFRICAN AMERICAN=2, AMERICAN INDIAN OR ALASKA
+    NATIVE=6, ASIAN=7, other/unknown=missing.
+
+Output must be one row per subject (USUBJID), sorted by STUDYID, USUBJID.

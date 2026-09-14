@@ -1,0 +1,26 @@
+Characteristic,Statistic,Value
+Age (years),Mean (SD),77.6 (6.80)
+,Median,77.0
+,Min – Max,70.0 – 91.0
+Age Group,,
+  >80,n,5
+  65-80,n,9
+Race,,
+  ASIAN,n,3
+  BLACK OR AFRICAN AMERICAN,n,1
+  WHITE,n,10
+Sex,,
+  F,n,7
+  M,n,7
+Baseline Height (cm),Mean (SD),169.8 (10.33)
+,Median,171.3
+,Min – Max,143.2 – 183.9
+Baseline Weight (kg),Mean (SD),82.2 (9.88)
+,Median,83.1
+,Min – Max,60.2 – 94.7
+Baseline BMI (kg/m²),Mean (SD),28.4 (1.13)
+,Median,28.0
+,Min – Max,27.4 – 30.5
+MMSE Total,Mean (SD),14.0 (1.00)
+,Median,13.7
+,Min – Max,13.2 – 15.5
