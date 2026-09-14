@@ -1,0 +1,106 @@
+name: Bug report
+description: Report a reproducible problem with eqty.sdk.r
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        If this issue may have security implications, do not continue with this form. Follow the private reporting process in the [security policy](https://github.com/eqtylab/integrity-r/security/policy).
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what impact did it have?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide the smallest code sample and steps that reproduce the problem.
+      placeholder: |
+        1. Install ...
+        2. Run ...
+        3. Observe ...
+      render: R
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: input
+    id: package-version
+    attributes:
+      label: eqty.sdk.r version
+      description: Run `packageVersion("eqty.sdk.r")` to find the installed version.
+      placeholder: 0.9.0
+    validations:
+      required: true
+
+  - type: input
+    id: python-sdk-version
+    attributes:
+      label: eqty-sdk Python package version
+      description: Include this when the issue involves the Python-backed SDK.
+      placeholder: e.g. 0.1.0
+
+  - type: input
+    id: r-version
+    attributes:
+      label: R version
+      description: Run `R.version.string` to find the version.
+      placeholder: e.g. R version 4.5.1
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      description: Include the Python version selected by reticulate.
+      placeholder: e.g. 3.12.4
+
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating system
+      placeholder: e.g. macOS 15.6, Ubuntu 24.04, or Windows 11
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or output
+      description: Remove credentials, tokens, private keys, personal data, and other sensitive information before pasting logs.
+      render: shell
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add anything else that may help diagnose the problem.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched the existing issues for duplicates.
+          required: true
+        - label: I removed secrets and sensitive data from this report.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

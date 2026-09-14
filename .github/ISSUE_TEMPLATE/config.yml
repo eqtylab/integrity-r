@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/eqtylab/integrity-r/security/policy
+    about: Report suspected vulnerabilities privately according to the security policy.
