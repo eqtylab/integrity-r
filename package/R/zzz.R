@@ -1,12 +1,60 @@
-.integrity_type_exports <- c(
-  "Agent", "Asset", "AssetType", "Association", "ASSOCIATION_TYPES",
-  "Benchmark", "BenchmarkResult", "Binary", "Certificate", "CID", "Code",
-  "Computation", "Compute", "Config", "Configuration", "Context",
-  "Credential", "Custom", "Database", "Dataset", "Declaration", "DID",
-  "Document", "Entity", "Error", "Guardrail", "Media", "Model", "Prompt",
-  "Reasoning", "Service", "SIGNER_ALGORITHMS", "Signer", "Skill",
-  "SystemPrompt", "Token", "Tool", "UsageError", "UUID"
-)
+.integrity_proxy <- function(name = NULL) {
+  structure(list(name = name), class = "eqty_sdk_proxy")
+}
+
+# Keep exported SDK objects inert until a user accesses one of their members.
+# Package checks inspect exported objects, so active bindings here would
+# initialize Python during otherwise static checks.
+`$.eqty_sdk_proxy` <- function(x, name) {
+  target <- .integrity_sdk()
+  proxy_name <- unclass(x)[["name"]]
+  if (!is.null(proxy_name)) {
+    target <- reticulate::py_get_attr(target, proxy_name)
+  }
+  reticulate::py_get_attr(target, name)
+}
+
+eqty <- .integrity_proxy()
+
+Agent <- .integrity_proxy("Agent")
+Asset <- .integrity_proxy("Asset")
+AssetType <- .integrity_proxy("AssetType")
+Association <- .integrity_proxy("Association")
+ASSOCIATION_TYPES <- .integrity_proxy("ASSOCIATION_TYPES")
+Benchmark <- .integrity_proxy("Benchmark")
+BenchmarkResult <- .integrity_proxy("BenchmarkResult")
+Binary <- .integrity_proxy("Binary")
+Certificate <- .integrity_proxy("Certificate")
+CID <- .integrity_proxy("CID")
+Code <- .integrity_proxy("Code")
+Computation <- .integrity_proxy("Computation")
+Compute <- .integrity_proxy("Compute")
+Config <- .integrity_proxy("Config")
+Configuration <- .integrity_proxy("Configuration")
+Context <- .integrity_proxy("Context")
+Credential <- .integrity_proxy("Credential")
+Custom <- .integrity_proxy("Custom")
+Database <- .integrity_proxy("Database")
+Dataset <- .integrity_proxy("Dataset")
+Declaration <- .integrity_proxy("Declaration")
+DID <- .integrity_proxy("DID")
+Document <- .integrity_proxy("Document")
+Entity <- .integrity_proxy("Entity")
+Error <- .integrity_proxy("Error")
+Guardrail <- .integrity_proxy("Guardrail")
+Media <- .integrity_proxy("Media")
+Model <- .integrity_proxy("Model")
+Prompt <- .integrity_proxy("Prompt")
+Reasoning <- .integrity_proxy("Reasoning")
+Service <- .integrity_proxy("Service")
+SIGNER_ALGORITHMS <- .integrity_proxy("SIGNER_ALGORITHMS")
+Signer <- .integrity_proxy("Signer")
+Skill <- .integrity_proxy("Skill")
+SystemPrompt <- .integrity_proxy("SystemPrompt")
+Token <- .integrity_proxy("Token")
+Tool <- .integrity_proxy("Tool")
+UsageError <- .integrity_proxy("UsageError")
+UUID <- .integrity_proxy("UUID")
 
 .integrity_missing_module <- function() {
   structure(list(), class = "integrity_missing")
@@ -26,7 +74,7 @@
 }
 
 .integrity_sdk <- function() {
-  sdk <- eqty
+  sdk <- .integrity_module()
   if (inherits(sdk, "integrity_missing")) {
     stop(
       "The 'eqty_sdk' Python module is unavailable in reticulate's active environment.\n",
@@ -43,33 +91,12 @@
 }
 
 .onLoad <- function(libname, pkgname) {
-  # Declare the public Python dependency before a lazy binding initializes
-  # Python. Reticulate provisions it in a managed environment when needed.
+  # Declare the public Python dependency without initializing Python.
+  # Reticulate provisions it in a managed environment when first needed.
   reticulate::py_require(
     packages = "eqty-sdk>=2.4.1",
     python_version = ">=3.10"
   )
-
-  ns <- asNamespace(pkgname)
-
-  register_binding <- function(r_name, binding_func) {
-    makeActiveBinding(r_name, binding_func, ns)
-  }
-
-  register_binding("eqty", .integrity_module)
-
-  for (export_name in .integrity_type_exports) {
-    local({
-      name <- export_name
-      register_binding(name, function() {
-        sdk <- eqty
-        if (inherits(sdk, "integrity_missing")) {
-          return(NULL)
-        }
-        reticulate::py_get_attr(sdk, name)
-      })
-    })
-  }
 }
 
 #' Initialize the Eqty SDK

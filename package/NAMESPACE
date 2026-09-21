@@ -56,3 +56,4 @@ export(UsageError)
 export(UUID)
 
 import(reticulate)
+S3method("$",eqty_sdk_proxy)
