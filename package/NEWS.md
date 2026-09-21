@@ -1,3 +1,9 @@
+# eqty.sdk.r 0.9.1
+
+- Defer Python initialization until an exported SDK proxy is used, allowing
+  package metadata and documentation checks to run without requiring the
+  `eqty-sdk` Python package.
+
 # eqty.sdk.r 0.9.0
 
 ## Initial release

@@ -29,9 +29,10 @@ NULL
 
 #' Python-backed Eqty SDK Types
 #'
-#' These names are lazy bindings to the matching `eqty_sdk` classes and enums.
-#' They are available after `library(eqty.sdk.r)` and retain the constructors,
-#' factories, properties, and methods of the installed Python SDK.
+#' These names are lazy proxies for the matching `eqty_sdk` classes and enums.
+#' They are available after `library(eqty.sdk.r)` and resolve the installed
+#' Python SDK only when a member is accessed. They retain its constructors,
+#' factories, properties, and methods.
 #'
 #' The built-in asset categories are `Agent`, `Benchmark`, `BenchmarkResult`,
 #' `Binary`, `Certificate`, `Code`, `Configuration`, `Credential`, `Custom`,
