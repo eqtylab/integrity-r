@@ -210,22 +210,62 @@ help(package = "eqty.sdk.r")
 Package documentation is maintained as roxygen comments in `package/R/*.R`.
 Generated `package/man/*.Rd` files are intentionally not committed.
 
-From the repository root, install `roxygen2` and run the release build:
+From the repository root, install the build dependencies once:
 
 ```r
-install.packages("roxygen2")
+install.packages(
+  c("reticulate", "roxygen2"),
+  repos = "https://cloud.r-project.org"
+)
 ```
 
+Build the source package and run the CRAN checks:
+
 ```bash
-./build-package.sh
+./build-package.sh --no-manual
 ```
 
 The script deletes stale reference files, regenerates them, builds the source
-tarball under `dist/`, and runs `R CMD check --as-cran`. Use
-`./build-package.sh --no-manual` on systems without TeX.
+tarball under `dist/`, and runs `R CMD check --as-cran`. Omit `--no-manual`
+when TeX is installed and the PDF reference manual should also be checked.
 
-The GitHub package-check workflow runs manually. Pushing a matching version 
-tag such runs the same build and attaches the source tarball to a GitHub Release. 
+Install the newly built package without hardcoding its version:
+
+```bash
+package_version="$(Rscript --vanilla -e \
+  'cat(read.dcf("package/DESCRIPTION")[1, "Version"])')"
+R CMD INSTALL "dist/eqty.sdk.r_${package_version}.tar.gz"
+```
+
+Restart any existing R session before reinstalling so it does not retain the
+previous package namespace. Verify the installed version with:
+
+```bash
+Rscript -e \
+  'library(eqty.sdk.r); cat(as.character(packageVersion("eqty.sdk.r")), "\n")'
+```
+
+Run each sample from its own directory because samples use relative paths. For
+example, from the repository root:
+
+```bash
+(cd samples/01-basic-sample && Rscript sample-register.R)
+```
+
+On the first SDK operation, `reticulate` provisions the declared Python
+dependency. When a specific Python environment was selected manually, install
+`eqty-sdk` into that environment as described in
+[Python dependency management](#python-dependency-management).
+
+For a quicker development cycle that skips documentation generation, the
+tarball build, and package checks, install the source directory directly:
+
+```bash
+R CMD INSTALL package
+```
+
+The GitHub package-check workflow runs manually. Pushing a matching version
+tag runs the same build and attaches the source tarball to a GitHub Release.
 The generated `.Rd` files are included in that tarball.
 
 ## Security
