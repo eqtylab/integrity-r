@@ -1,6 +1,6 @@
 Package: eqty.sdk.r
 Title: Verifiable Provenance for R Workflows
-Version: 0.9.0
+Version: 0.9.1
 Authors@R: person("Support", "EQTY Lab", email = "package-management@eqtylab.io", role = c("aut", "cre"))
 Description: Provides an R interface for building verifiable manifests around
     data, models, prompts, agents, computations, and related lineage. Exposes

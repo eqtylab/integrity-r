@@ -2,7 +2,14 @@
 
 This file records notable changes to `eqty.sdk.r`.
 
-## 0.9.0
+## 0.9.1 - 2026-09-21
+
+### Fixed
+
+- Deferred Python initialization until an exported SDK proxy is used so CRAN
+  package checks do not require the `eqty-sdk` Python package.
+
+## 0.9.0 - 2026-09-18
 
 Initial release.
 
