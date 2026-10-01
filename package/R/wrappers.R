@@ -164,20 +164,27 @@
 #'   creating this intermediate function does not initialize Python.
 #'
 #' @examples
+#' # Create a decorator without requiring Python or the SDK.
+#' sum_decorator <- integrity_compute(metadata = list(name = "Sum Generator"))
+#' stopifnot(is.function(sum_decorator))
+#'
 #' \dontrun{
+#' # Requires Python >= 3.10 and the 'eqty-sdk' Python package.
+#' # First use may download and install this additional software.
 #' ctx <- Context$new("Example computation")
-#' 
-#' # Define computation
+#' invisible(integrity_init(default_context = ctx, custom_dir = tempdir()))
+#' signer <- Signer$load_or_create(name = "example-computation-signer")
+#' invisible(integrity_set_active_signer(signer))
+#'
 #' my_algo <- integrity_compute(
 #'   context = ctx,
 #'   metadata = list(name = "Sum Generator"),
-#'   func = function(x, y) {
-#'      return(x + y)
-#'   }
+#'   func = function(x, y) x + y
 #' )
-#' 
-#' # Run it
+#'
+#' # The result is an SDK asset representing the sum.
 #' result <- my_algo(10, 20)
+#' result$cid
 #' }
 #' @export
 integrity_compute <- function(
