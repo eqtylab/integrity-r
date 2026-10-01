@@ -49,6 +49,15 @@ NULL
 #' [Service] connects the SDK to a remote Integrity Service. It is unnecessary
 #' when a workflow only exports a local manifest.
 #'
+#' @return Each exported name is a list of class \code{eqty_sdk_proxy} that
+#'   lazily resolves the corresponding Python SDK class, enum, or constant.
+#'   Accessing a member with \code{$} returns that member through
+#'   \pkg{reticulate}. Constructors and factories return Python-backed
+#'   objects inheriting from \code{python.builtin.object}, with SDK-specific
+#'   classes such as \code{Dataset}, \code{Context}, or \code{CID}. These
+#'   objects represent assets, provenance contexts, content identifiers,
+#'   and the other SDK types described above. Enum members and constants
+#'   represent the SDK's supported categories and algorithms.
 #' @name eqty-sdk-types
 #' @aliases Agent
 #' @aliases Asset
@@ -96,6 +105,12 @@ NULL
 #' `eqty` is retained for compatibility. Prefer the exported R names such as
 #' [Dataset], [Context], and [integrity_init()] for new code.
 #'
+#' @return A list of class \code{eqty_sdk_proxy} representing the Python
+#'   \code{eqty_sdk} module. Accessing a member with \code{$} loads the
+#'   module and returns the requested Python object through
+#'   \pkg{reticulate}. Python objects inherit from
+#'   \code{python.builtin.object}; values that \pkg{reticulate} converts
+#'   automatically are returned as the corresponding R values.
 #' @name eqty
 #' @export
 NULL

@@ -155,11 +155,14 @@
 #'   local blob store. Defaults to `FALSE`. Set this to `TRUE` only when the
 #'   source is safe to include and contains no secrets.
 #'
-#' @return A function that calls `func` and records the computation's inputs and
-#'   produced outputs. Multiple outputs are returned as an ordinary R list. If
-#'   `func` is `NULL`, returns a function that first accepts the function to
-#'   wrap.
-#'   
+#' @return An R function that calls `func` and records the computation's
+#'   inputs and outputs. Calling this function returns a Python-backed SDK
+#'   asset inheriting from \code{python.builtin.object}, or an R list of
+#'   such assets for multiple outputs. Each asset represents a result of
+#'   `func` and provides its content identifier through `$cid`. If `func`
+#'   is `NULL`, returns an R function that accepts the function to wrap;
+#'   creating this intermediate function does not initialize Python.
+#'
 #' @examples
 #' \dontrun{
 #' ctx <- Context$new("Example computation")
