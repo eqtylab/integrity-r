@@ -1,10 +1,11 @@
 Package: eqty.sdk.r
-Title: Verifiable Provenance for R Workflows
+Title: Verifiable Provenance for 'R' Workflows
 Version: 0.9.1.9000
 Authors@R: person("Support", "EQTY Lab", email = "package-management@eqtylab.io", role = c("aut", "cre"))
-Description: Provides an R interface for building verifiable manifests around
+Description: Provides an 'R' interface for building verifiable manifests around
     data, models, prompts, agents, computations, and related lineage. Exposes
-    the public 'eqty-sdk' Python package through R-accessible types for creating
+    the public 'eqty-sdk' 'Python' package through types accessible from 'R' for
+    creating
     assets, connecting computation inputs and outputs by content identifier,
     grouping statements in contexts, and exporting manifest JSON files.
 License: Apache License (== 2.0)
