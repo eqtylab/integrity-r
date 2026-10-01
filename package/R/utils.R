@@ -32,6 +32,12 @@ integrity_path <- function(path) {
 #' @return A character string containing the resolved path. Returns `NULL` if no path 
 #'   could be determined.
 #' 
+#' @examples
+#' integrity_resolve_path("data/input.csv")
+#' integrity_resolve_path(list(path = "output/result.csv"))
+#' stopifnot(identical(
+#'   integrity_resolve_path("data/input.csv"), "data/input.csv"
+#' ))
 #' @export
 integrity_resolve_path <- function(input_object) {
   data_path <- NULL

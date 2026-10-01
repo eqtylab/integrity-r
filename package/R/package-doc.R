@@ -58,6 +58,11 @@ NULL
 #'   objects represent assets, provenance contexts, content identifiers,
 #'   and the other SDK types described above. Enum members and constants
 #'   represent the SDK's supported categories and algorithms.
+#' @examples
+#' # Inspect the lazy proxy without initializing Python.
+#' class(Dataset)
+#' stopifnot(inherits(Dataset, "eqty_sdk_proxy"))
+#'
 #' @name eqty-sdk-types
 #' @aliases Agent
 #' @aliases Asset
@@ -111,6 +116,11 @@ NULL
 #'   \pkg{reticulate}. Python objects inherit from
 #'   \code{python.builtin.object}; values that \pkg{reticulate} converts
 #'   automatically are returned as the corresponding R values.
+#' @examples
+#' # The compatibility proxy can be inspected without initializing Python.
+#' class(eqty)
+#' stopifnot(inherits(eqty, "eqty_sdk_proxy"))
+#'
 #' @name eqty
 #' @export
 NULL
