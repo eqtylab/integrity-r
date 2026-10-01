@@ -2,6 +2,18 @@
 
 This file records notable changes to `eqty.sdk.r`.
 
+## 0.9.2 - 2026-10-01
+
+### Fixed
+
+- Quoted software and package names in the DESCRIPTION title and description
+  to meet CRAN formatting requirements.
+- Added return-value documentation describing exported SDK proxy classes and
+  their meaning, and clarified computation return values.
+- Added runnable examples for SDK proxies, path resolution, and computation
+  decorators. Explained the additional software required by the full computation
+  example and added initialization and signer setup.
+
 ## 0.9.1 - 2026-09-21
 
 ### Fixed
