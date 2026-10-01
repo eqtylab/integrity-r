@@ -155,26 +155,36 @@
 #'   local blob store. Defaults to `FALSE`. Set this to `TRUE` only when the
 #'   source is safe to include and contains no secrets.
 #'
-#' @return A function that calls `func` and records the computation's inputs and
-#'   produced outputs. Multiple outputs are returned as an ordinary R list. If
-#'   `func` is `NULL`, returns a function that first accepts the function to
-#'   wrap.
-#'   
+#' @return An R function that calls `func` and records the computation's
+#'   inputs and outputs. Calling this function returns a Python-backed SDK
+#'   asset inheriting from \code{python.builtin.object}, or an R list of
+#'   such assets for multiple outputs. Each asset represents a result of
+#'   `func` and provides its content identifier through `$cid`. If `func`
+#'   is `NULL`, returns an R function that accepts the function to wrap;
+#'   creating this intermediate function does not initialize Python.
+#'
 #' @examples
+#' # Create a decorator without requiring Python or the SDK.
+#' sum_decorator <- integrity_compute(metadata = list(name = "Sum Generator"))
+#' stopifnot(is.function(sum_decorator))
+#'
 #' \dontrun{
+#' # Requires Python >= 3.10 and the 'eqty-sdk' Python package.
+#' # First use may download and install this additional software.
 #' ctx <- Context$new("Example computation")
-#' 
-#' # Define computation
+#' invisible(integrity_init(default_context = ctx, custom_dir = tempdir()))
+#' signer <- Signer$load_or_create(name = "example-computation-signer")
+#' invisible(integrity_set_active_signer(signer))
+#'
 #' my_algo <- integrity_compute(
 #'   context = ctx,
 #'   metadata = list(name = "Sum Generator"),
-#'   func = function(x, y) {
-#'      return(x + y)
-#'   }
+#'   func = function(x, y) x + y
 #' )
-#' 
-#' # Run it
+#'
+#' # The result is an SDK asset representing the sum.
 #' result <- my_algo(10, 20)
+#' result$cid
 #' }
 #' @export
 integrity_compute <- function(
