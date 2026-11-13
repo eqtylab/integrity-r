@@ -6,6 +6,23 @@
 # -> independent ADSL -> comparison with production ADSL -> pass/fail report.
 # No subject-level data or production ADSL is sent to LLM.
 
+# Resolve the shared options beside this script, including when sourced in R.
+local({
+  source_files <- vapply(sys.frames(), function(frame) {
+    if (is.null(frame$ofile)) "" else as.character(frame$ofile)
+  }, character(1L))
+  cli_file <- sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE))
+  script_files <- c(cli_file, source_files[nzchar(source_files)])
+  script_dir <- if (length(script_files)) dirname(tail(script_files, 1L)) else "."
+  sys.source(file.path(script_dir, "llm-options.R"), envir = parent.env(environment()))
+})
+
+# Parse CLI arguments before loading the SDK; help needs no SDK configuration.
+if (sys.nframe() == 0L) {
+  qc_cli_options <- qc_llm_options()
+  if (is.null(qc_cli_options)) quit(status = 0L)
+}
+
 library(eqty.sdk.r)
 
 # ---- EQTY SDK configuration -------------------------------------------------
@@ -244,27 +261,10 @@ adsl_qc_asset_value <- function(asset) {
 }
 
 adsl_qc_request_model <- function(agent_asset, system_prompt_asset, user_prompt_asset) {
-  # ellmer is the R package that sends the prompts to LLM API.
-  if (!requireNamespace("ellmer", quietly = TRUE)) {
-    stop("Package 'ellmer' is required. Install it with install.packages('ellmer').", call. = FALSE)
-  }
-
   agent_config <- adsl_qc_asset_value(agent_asset)
   system_prompt <- as.character(adsl_qc_asset_value(system_prompt_asset))
   user_prompt <- as.character(adsl_qc_asset_value(user_prompt_asset))
-  model <- agent_config$model
-  if (is.null(model) || !nzchar(as.character(model))) {
-    stop("The ADSL code-generation Agent does not define a model.", call. = FALSE)
-  }
-  model <- as.character(model)
-
-  # `echo = "none"` returns the answer to this script instead of streaming it
-  # directly to the console. The script prints it later in a labelled section.
-  chat <- ellmer::chat_google_gemini(
-    system_prompt = system_prompt,
-    model = model,
-    echo = "none"
-  )
+  chat <- qc_llm_chat(agent_config, system_prompt)
 
   response_text <- as.character(chat$chat(user_prompt))
   assistant_turn <- chat$last_turn()
@@ -307,7 +307,7 @@ adsl_qc_project_root <- function() {
   candidates <- c(getwd(), file.path(getwd(), ".."))
   if (length(args)) {
     script_path <- sub("^--file=", "", args[[1L]])
-    candidates <- c(candidates, file.path(dirname(script_path), ".."))
+    candidates <- c(dirname(script_path), candidates)
   }
   candidates <- unique(candidates)
 
@@ -330,10 +330,13 @@ run_live_adsl_qc_demo <- function(
   production_adsl_data_path = file.path("data", "production", "adsl.csv"),
   llm_generated__adsl_data_path = file.path("output", "adsl_llm.csv"),
   generated_code_path = file.path("output", "adsl_generated.R"),
-  model = Sys.getenv("GEMINI_MODEL", unset = "gemini-3.8-flash"),
+  model = NULL,
   critical_vars = c("SAFFL", "ITTFL", "EFFFL", "AGEGR1", "AGEGR1N", "EOSSTT", "DCDECOD", "COMP8FL", "COMP16FL", "COMP24FL"),
-  root = adsl_qc_project_root(), verbose = TRUE
+  root = adsl_qc_project_root(), verbose = TRUE,
+  provider = "gemini", base_url = NULL
 ) {
+  llm_config <- qc_llm_config(provider, model, base_url)
+  model <- llm_config$model
   # STEP 1 — Resolve all paths and check that the specification and each SDTM
   # input file exist. No files are sent to the LLM at this point.
 
@@ -409,7 +412,10 @@ run_live_adsl_qc_demo <- function(
   # is configured independently and is not an output of this computation.
   system_prompt <- paste(
     "You are an independent clinical programmer.",
-    "Return only one complete executable R program; no explanation, Markdown, CSV, or data values.",
+    "Return only the raw R source of one complete executable program.",
+    "Do not wrap the code in Markdown or triple backticks, including ```r.",
+    "Do not include explanations, reasoning, headings, introductory or closing text, CSV output, or data values.",
+    "Your entire response will be parsed directly as R code; start with R code and end with the final complete R statement.",
     "Use only base R and utils::read.csv / utils::write.csv.",
     "Your program must read supplied CSV files at runtime; never embed or invent input rows.",
     "Handle empty filtered data and all-missing source values without error; check again after removing missing values before calling aggregate().",
@@ -420,11 +426,13 @@ run_live_adsl_qc_demo <- function(
   d_agent <- Agent$with_context(sdk$ctx)$from_object(
     integrity_dict(
       package = "ellmer",
-      provider = "Google Gemini",
-      model = model
+      provider = llm_config$provider,
+      model = model,
+      base_url = llm_config$base_url,
+      max_tokens = llm_config$max_tokens
     ),
     name = "ADSL code-generation agent",
-    description = "Ellmer Gemini agent configured to generate the independent ADSL R program"
+    description = "Ellmer agent configured to generate the independent ADSL R program"
   )
   d_system_prompt <- SystemPrompt$with_context(sdk$ctx)$from_object(
     system_prompt,
@@ -468,6 +476,8 @@ run_live_adsl_qc_demo <- function(
   if (isTRUE(verbose)) {
     adsl_qc_log("LIVE ADSL QC — CONFIGURATION", paste(
       "Project root:       ", root,
+      "\nProvider:           ", llm_config$provider,
+      "\nBase URL:           ", if (is.null(llm_config$base_url)) "ellmer default" else llm_config$base_url,
       "\nModel:              ", model,
       "\nSpecification:      ", spec_path,
       "\nSDTM input files:\n  ", paste(registered_input_files, collapse = "\n  "),
@@ -513,12 +523,13 @@ run_live_adsl_qc_demo <- function(
     func = function(raw_response_document) {
       response_record <- adsl_qc_asset_value(raw_response_document)
       code <- adsl_qc_extract_r_code(as.character(response_record$response_text))
-      adsl_qc_validate_generated_code(code)
-      writeLines(code, generated_code_path, useBytes = TRUE)
 
       if (isTRUE(verbose)) {
         adsl_qc_log(paste0("GENERATED R CODE (", generated_code_path, ")"), code)
       }
+
+      adsl_qc_validate_generated_code(code)
+      writeLines(code, generated_code_path, useBytes = TRUE)
 
       generated_code <- Code$with_context(sdk$ctx)$from_path(
         generated_code_path,
@@ -736,5 +747,7 @@ run_live_adsl_qc_demo <- function(
 # `Rscript sample_01_adsl_qc_agent.R` starts the live workflow. When this file
 # is sourced by test_adsl_qc_demo_agent.R, only its functions are loaded.
 if (sys.nframe() == 0L) {
-  run_live_adsl_qc_demo()
+  # Keep relative manifest paths and local SDK state inside the sample folder.
+  setwd(adsl_qc_project_root())
+  do.call(run_live_adsl_qc_demo, qc_cli_options)
 }

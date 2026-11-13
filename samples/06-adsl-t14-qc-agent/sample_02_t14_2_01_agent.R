@@ -7,6 +7,23 @@
 # T14.2.01 -> comparison with the production table -> pass/fail report.
 # Subject-level ADSL and the production table are never sent to the LLM.
 
+# Resolve the shared options beside this script, including when sourced in R.
+local({
+  source_files <- vapply(sys.frames(), function(frame) {
+    if (is.null(frame$ofile)) "" else as.character(frame$ofile)
+  }, character(1L))
+  cli_file <- sub("^--file=", "", grep("^--file=", commandArgs(FALSE), value = TRUE))
+  script_files <- c(cli_file, source_files[nzchar(source_files)])
+  script_dir <- if (length(script_files)) dirname(tail(script_files, 1L)) else "."
+  sys.source(file.path(script_dir, "llm-options.R"), envir = parent.env(environment()))
+})
+
+# Parse CLI arguments before loading the SDK; help needs no SDK configuration.
+if (sys.nframe() == 0L) {
+  qc_cli_options <- qc_llm_options()
+  if (is.null(qc_cli_options)) quit(status = 0L)
+}
+
 library(eqty.sdk.r)
 
 # ---- EQTY SDK configuration -------------------------------------------------
@@ -395,24 +412,10 @@ t14_qc_asset_value <- function(asset) {
 }
 
 t14_qc_request_model <- function(agent_asset, system_prompt_asset, user_prompt_asset) {
-  if (!requireNamespace("ellmer", quietly = TRUE)) {
-    stop("Package 'ellmer' is required. Install it with install.packages('ellmer').", call. = FALSE)
-  }
-
   agent_config <- t14_qc_asset_value(agent_asset)
   system_prompt <- as.character(t14_qc_asset_value(system_prompt_asset))
   user_prompt <- as.character(t14_qc_asset_value(user_prompt_asset))
-  model <- agent_config$model
-  if (is.null(model) || !nzchar(as.character(model))) {
-    stop("The T14.2.01 code-generation Agent does not define a model.", call. = FALSE)
-  }
-  model <- as.character(model)
-
-  chat <- ellmer::chat_google_gemini(
-    system_prompt = system_prompt,
-    model = model,
-    echo = "none"
-  )
+  chat <- qc_llm_chat(agent_config, system_prompt)
 
   response_text <- as.character(chat$chat(user_prompt))
   assistant_turn <- chat$last_turn()
@@ -454,7 +457,7 @@ t14_qc_project_root <- function() {
   candidates <- c(getwd(), file.path(getwd(), ".."))
   if (length(args)) {
     script_path <- sub("^--file=", "", args[[1L]])
-    candidates <- c(candidates, file.path(dirname(script_path), ".."))
+    candidates <- c(dirname(script_path), candidates)
   }
   candidates <- unique(candidates)
 
@@ -477,10 +480,13 @@ run_live_t14_2_01_qc_demo <- function(
   production_path = file.path("data", "production", "T14_2_01.csv"),
   independent_path = file.path("output", "t14_2_01_demo_llm.csv"),
   generated_code_path = file.path("output", "t14_2_01_demo_generated.R"),
-  model = Sys.getenv("GEMINI_MODEL", unset = "gemini-3.8-flash"),
+  model = NULL,
   root = t14_qc_project_root(),
-  verbose = TRUE
+  verbose = TRUE,
+  provider = "gemini", base_url = NULL
 ) {
+  llm_config <- qc_llm_config(provider, model, base_url)
+  model <- llm_config$model
   # STEP 1 — Resolve and verify the real project inputs.
   root <- normalizePath(root, mustWork = TRUE)
   normalize <- function(path) normalizePath(t14_qc_resolve(path, root), mustWork = FALSE)
@@ -542,7 +548,10 @@ run_live_t14_2_01_qc_demo <- function(
   # and is not an output of this computation.
   system_prompt <- paste(
     "You are an independent clinical programmer.",
-    "Return only one complete executable R program; no explanation, Markdown, CSV, or data values.",
+    "Return only the raw R source of one complete executable program.",
+    "Do not wrap the code in Markdown or triple backticks, including ```r.",
+    "Do not include explanations, reasoning, headings, introductory or closing text, CSV output, or data values.",
+    "Your entire response will be parsed directly as R code; start with R code and end with the final complete R statement.",
     "Use only base R and utils::read.csv / utils::write.csv.",
     "Your program must read the supplied independent ADSL CSV at runtime; never embed or invent input rows.",
     "Do not call the operating system, network, package installation, production ADSL, production program, or production table."
@@ -550,11 +559,13 @@ run_live_t14_2_01_qc_demo <- function(
   d_agent <- Agent$with_context(sdk$ctx)$from_object(
     integrity_dict(
       package = "ellmer",
-      provider = "Google Gemini",
-      model = model
+      provider = llm_config$provider,
+      model = model,
+      base_url = llm_config$base_url,
+      max_tokens = llm_config$max_tokens
     ),
     name = "T14.2.01 code-generation agent",
-    description = "Ellmer Gemini agent configured to generate the independent T14.2.01 R program"
+    description = "Ellmer agent configured to generate the independent T14.2.01 R program"
   )
   d_system_prompt <- SystemPrompt$with_context(sdk$ctx)$from_object(
     system_prompt,
@@ -598,6 +609,8 @@ run_live_t14_2_01_qc_demo <- function(
   if (isTRUE(verbose)) {
     t14_qc_log("LIVE T14.2.01 QC — CONFIGURATION", paste(
       "Project root:       ", root,
+      "\nProvider:           ", llm_config$provider,
+      "\nBase URL:           ", if (is.null(llm_config$base_url)) "ellmer default" else llm_config$base_url,
       "\nModel:              ", model,
       "\nSpecification:      ", spec_path,
       "\nIndependent ADSL:    ", registered_adsl_path,
@@ -644,6 +657,11 @@ run_live_t14_2_01_qc_demo <- function(
     func = function(raw_response_document) {
       response_record <- t14_qc_asset_value(raw_response_document)
       code <- t14_qc_extract_r_code(as.character(response_record$response_text))
+
+      if (isTRUE(verbose)) {
+        t14_qc_log(paste0("GENERATED R CODE (", generated_code_path, ")"), code)
+      }
+
       t14_qc_validate_generated_code(
         code,
         required_paths = c(registered_adsl_path, independent_path),
@@ -657,10 +675,6 @@ run_live_t14_2_01_qc_demo <- function(
         )
       )
       writeLines(code, generated_code_path, useBytes = TRUE)
-
-      if (isTRUE(verbose)) {
-        t14_qc_log(paste0("GENERATED R CODE (", generated_code_path, ")"), code)
-      }
 
       generated_code <- Code$with_context(sdk$ctx)$from_path(
         generated_code_path,
@@ -837,5 +851,7 @@ run_live_t14_2_01_qc_demo <- function(
 
 # Running this file starts the live workflow; sourcing it loads only helpers.
 if (sys.nframe() == 0L) {
-  run_live_t14_2_01_qc_demo()
+  # Keep relative manifest paths and local SDK state inside the sample folder.
+  setwd(t14_qc_project_root())
+  do.call(run_live_t14_2_01_qc_demo, qc_cli_options)
 }

@@ -49,7 +49,7 @@ From the repository root:
 
 The runner first installs any missing optional dependencies, then changes to
 each sample folder before invoking `Rscript`. It stops on the first failure.
-Sample 05 contacts GitHub, and sample 06 requires Gemini credentials.
+Sample 05 contacts GitHub, and sample 06 uses Gemini credentials by default.
 
 ## 01: Basic sample
 
@@ -156,7 +156,60 @@ Rscript sample_02_t14_2_01_agent.R
 Rscript sample_03_merge.R output/manifest-adsl.json output/manifest-t14-2-01.json
 ```
 
-The agent workflows require the `ellmer` package and Gemini credentials.
+The two agent scripts also accept paths from the repository root, for example:
+
+```bash
+Rscript samples/06-adsl-t14-qc-agent/sample_01_adsl_qc_agent.R \
+  --provider claude --base-url http://localhost:8080
+```
+
+They switch to their sample directory before running, so generated outputs,
+manifests, and local SDK state stay there.
+
+The agent workflows require the `ellmer` package. Both accept these options
+using `--option value`:
+
+| Option | Purpose |
+|---|---|
+| `--provider gemini\|claude` | Select the provider; defaults to `gemini`. |
+| `--model MODEL` | Override the provider's hardcoded default model. |
+| `--base-url URL` | Override ellmer's default API URL with a provider-compatible endpoint. |
+| `--help` or `-h` | Show options without running the workflow. |
+
+Set `GOOGLE_API_KEY` for Gemini or `ANTHROPIC_API_KEY` for Claude in your local
+environment. Do not put credentials in the endpoint URL. URLs with embedded
+credentials, query parameters, or fragments are rejected because the endpoint
+is recorded in lineage and configuration logs.
+
+Gemini defaults to `gemini-3.8-flash`. Claude defaults to
+`claude-sonnet-5-5`. Use `--model` to
+select a model available to your account or custom endpoint.
+
+Both agents request up to 16,384 output tokens for a complete R program and
+record this limit on the Agent asset. A custom proxy must allow that output
+limit; a lower limit imposed by the proxy can still truncate the response.
+
+For Claude, run both stages with the same options:
+
+```bash
+Rscript sample_01_adsl_qc_agent.R --provider claude --model claude-sonnet-5-5
+Rscript sample_02_t14_2_01_agent.R --provider claude --model claude-sonnet-5-5
+```
+
+For a custom Claude-compatible endpoint, for example:
+
+```bash
+Rscript sample_01_adsl_qc_agent.R --provider claude \
+  --model YOUR_MODEL --base-url https://your-endpoint.example/v1
+```
+
+Pass the same options to `sample_02_t14_2_01_agent.R`. A Gemini endpoint instead
+requires `--provider gemini` and a Gemini-compatible base URL. A custom URL does
+not change the API protocol to OpenAI compatibility. The scripts load shared
+configuration from [`llm-options.R`](06-adsl-t14-qc-agent/llm-options.R) beside
+them. When sourcing the scripts in R, the `run_live_*_qc_demo()` functions also
+accept named `provider`, `model`, and `base_url` arguments. The all-samples
+runner continues to use Gemini by default.
 
 The first two commands write `output/manifest-adsl.json` and
 `output/manifest-t14-2-01.json`. The merger accepts one or more manifest paths
